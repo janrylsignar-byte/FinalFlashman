@@ -489,12 +489,12 @@ export default function DeanPredictions() {
                   <div>
                     <h4 className="font-semibold mb-3 text-sm">Data Points Analysis (Areas of Concern)</h4>
                     <div className="space-y-2">
-                      {result.student.family_income < 20000 && (
+                      {result.student.family_income < 25000 && (
                         <div className="p-2 rounded bg-amber-50 border border-amber-200 text-xs">
-                          <span className="font-medium text-amber-800">Financial:</span> Family income (₱{result.student.family_income.toLocaleString()}) is below threshold (₱20,000)
+                          <span className="font-medium text-amber-800">Financial:</span> Family income (₱{result.student.family_income.toLocaleString()}) is below threshold (₱25,000)
                         </div>
                       )}
-                      {result.student.scholarship !== 'yes' && result.student.family_income < 20000 && (
+                      {result.student.scholarship !== 'yes' && result.student.family_income < 25000 && (
                         <div className="p-2 rounded bg-amber-50 border border-amber-200 text-xs">
                           <span className="font-medium text-amber-800">Financial:</span> No scholarship support detected
                         </div>

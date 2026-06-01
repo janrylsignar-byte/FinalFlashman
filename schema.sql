@@ -33,6 +33,7 @@ CREATE TABLE students (
     -- Academic Performance/History (Likert 1-5)
     satisfied_with_performance INTEGER DEFAULT 3,
     previous_grades_affect INTEGER DEFAULT 3,
+    try_improve_grades INTEGER DEFAULT 3,
     -- Learning Behavior (Likert 1-5)
     study_regularly INTEGER DEFAULT 3,
     submit_on_time INTEGER DEFAULT 3,
@@ -45,6 +46,19 @@ CREATE TABLE students (
     classmates_influence_positively INTEGER DEFAULT 3,
     work_well_with_classmates INTEGER DEFAULT 3,
     friends_motivate INTEGER DEFAULT 3,
+    -- Learning Resources and Facilities (Likert 1-5)
+    classrooms_comfortable INTEGER DEFAULT 3,
+    facilities_help_focus INTEGER DEFAULT 3,
+    environment_motivates_attendance INTEGER DEFAULT 3,
+    computer_labs_support_studies INTEGER DEFAULT 3,
+    facilities_affect_participation INTEGER DEFAULT 3,
+    furniture_adequate INTEGER DEFAULT 3,
+    classrooms_need_improvements INTEGER DEFAULT 3,
+    learning_equipment_helps_performance INTEGER DEFAULT 3,
+    internet_supports_studies INTEGER DEFAULT 3,
+    maintained_environment_encourages_attendance INTEGER DEFAULT 3,
+    temperature_affects_concentration INTEGER DEFAULT 3,
+    physical_condition_influences_motivation INTEGER DEFAULT 3,
     -- Student Concerns (text field for open-ended responses)
     concerns TEXT,
     -- Status

@@ -6,7 +6,7 @@ export function analyzeFinancialRisk(student) {
   const hasScholarship = student.scholarship === 'yes';
   const scholarshipAmount = student.scholarship_amount || 0;
 
-  const isAtRisk = familyIncome < 20000 && !hasScholarship;
+  const isAtRisk = familyIncome < 25000 && !hasScholarship;
   const riskScore = isAtRisk ? 1 : 0;
 
   return {
@@ -25,75 +25,74 @@ export function analyzeFinancialRisk(student) {
 }
 
 export function analyzePersonalRisk(student) {
-  // Course Experience (3 questions, 1-5 scale)
-  // 5 = strongly agree (good), 1 = strongly disagree (bad)
-  const courseExperience = [
+  // Personal survey questions (Likert scale 1-5, where 5 is best)
+  // 15 personal variables + 8 learning resources/facilities = 23 total
+  const personalVariables = [
+    // Personal (15)
     student.like_course || 3,
     student.interested_in_subjects || 3,
     student.course_motivates || 3,
-  ];
-  const courseAvg = courseExperience.reduce((a, b) => a + b, 0) / courseExperience.length;
-
-  // Academic Performance/History (2 questions, 1-5 scale)
-  const academicPerf = [
     student.satisfied_with_performance || 3,
     student.previous_grades_affect || 3,
-  ];
-  const academicPerfAvg = academicPerf.reduce((a, b) => a + b, 0) / academicPerf.length;
-
-  // Learning Behavior (3 questions, 1-5 scale)
-  const learningBehavior = [
+    student.try_improve_grades || 3,
     student.study_regularly || 3,
     student.submit_on_time || 3,
     student.manage_time_well || 3,
-  ];
-  const learningAvg = learningBehavior.reduce((a, b) => a + b, 0) / learningBehavior.length;
-
-  // Instructor Interaction (3 questions, 1-5 scale)
-  const instructorInteraction = [
     student.instructors_explain_clearly || 3,
     student.approach_instructors || 3,
     student.instructors_encourage || 3,
-  ];
-  const instructorAvg = instructorInteraction.reduce((a, b) => a + b, 0) / instructorInteraction.length;
-
-  // Classmate/Peer Influence (3 questions, 1-5 scale)
-  const peerInfluence = [
     student.classmates_influence_positively || 3,
     student.work_well_with_classmates || 3,
     student.friends_motivate || 3,
+    // Learning Resources and Facilities (8)
+    student.classrooms_comfortable || 3,
+    student.facilities_help_focus || 3,
+    student.environment_motivates_attendance || 3,
+    student.computer_labs_support_studies || 3,
+    student.facilities_affect_participation || 3,
+    student.furniture_adequate || 3,
+    student.classrooms_need_improvements || 3,
+    student.learning_equipment_helps_performance || 3,
   ];
-  const peerAvg = peerInfluence.reduce((a, b) => a + b, 0) / peerInfluence.length;
 
-  const allScores = [courseAvg, academicPerfAvg, learningAvg, instructorAvg, peerAvg];
-  const overallAvg = allScores.reduce((a, b) => a + b, 0) / allScores.length;
+  const overallAvg = personalVariables.reduce((a, b) => a + b, 0) / personalVariables.length;
 
   // Scale: 5 = strongly agree (good), 1 = strongly disagree (bad)
-  // Above 3 = agree (good), Below 3 or equal = disagree (bad/at-risk)
-  const isAtRisk = overallAvg <= 3;
+  // Below 3 = disagree (bad/at-risk), 3 or above = agree (good)
+  const isAtRisk = overallAvg < 3;
   const riskScore = isAtRisk ? 1 : 0;
 
-  const subCategories = [
-    { name: 'Course Experience', avg: courseAvg, questions: courseExperience },
-    { name: 'Academic Self-Perception', avg: academicPerfAvg, questions: academicPerf },
-    { name: 'Learning Behavior', avg: learningAvg, questions: learningBehavior },
-    { name: 'Instructor Interaction', avg: instructorAvg, questions: instructorInteraction },
-    { name: 'Peer Influence', avg: peerAvg, questions: peerInfluence },
+  // Generate strengths and weaknesses based on individual variable values
+  const strengths = [];
+  const weaknesses = [];
+  const variableNames = [
+    'like_course', 'interested_in_subjects', 'course_motivates', 'satisfied_with_performance',
+    'previous_grades_affect', 'try_improve_grades', 'study_regularly', 'submit_on_time',
+    'manage_time_well', 'instructors_explain_clearly', 'approach_instructors', 'instructors_encourage',
+    'classmates_influence_positively', 'work_well_with_classmates', 'friends_motivate',
+    'classrooms_comfortable', 'facilities_help_focus', 'environment_motivates_attendance',
+    'computer_labs_support_studies', 'facilities_affect_participation', 'furniture_adequate',
+    'classrooms_need_improvements', 'learning_equipment_helps_performance'
   ];
 
-  // Weaknesses: avg <= 3 (disagree/bad)
-  // Strengths: avg > 3 (agree/good)
-  const weaknesses = subCategories.filter(cat => cat.avg <= 3);
-  const strengths = subCategories.filter(cat => cat.avg > 3);
+  personalVariables.forEach((value, index) => {
+    if (value >= 4) {
+      strengths.push({ name: variableNames[index], avg: value });
+    } else if (value <= 2) {
+      weaknesses.push({ name: variableNames[index], avg: value });
+    }
+  });
 
   return {
     category: 'Personal',
     isAtRisk,
     riskScore,
-    overallAvg,
-    subCategories,
-    weaknesses,
+    factors: {
+      overallAvg,
+      personalValues: personalVariables,
+    },
     strengths,
+    weaknesses,
     explanation: isAtRisk
       ? `Student shows overall personal risk (average: ${overallAvg.toFixed(1)}/5). Weak areas: ${weaknesses.map(w => w.name).join(', ')}.`
       : `Student shows good personal standing (average: ${overallAvg.toFixed(1)}/5).${weaknesses.length > 0 ? ` Areas for improvement: ${weaknesses.map(w => w.name).join(', ')}.` : ''}`,
@@ -123,12 +122,17 @@ export function analyzeAcademicRisk(student, studentGrades = []) {
   const finalGpa = avgGpa || historyGpa;
 
   // Philippine grading scale: 1.0 = highest, 3.0 = passing, 5.0 = failed
-  const isAtRisk = finalGpa !== null && finalGpa > 2.5;
+  // Check if any individual GPA is >= 2.50
+  const hasGpaAtRisk = gpaValues.some(gpa => gpa >= 2.5);
+  const isAtRisk = hasGpaAtRisk || (finalGpa !== null && finalGpa >= 2.5);
   const riskScore = isAtRisk ? 1 : 0;
 
   // Check for failing subjects (grade > 3.0)
   const failingSubjects = studentGrades.filter(g => g.grade > 3.0);
   const hasFailingSubjects = failingSubjects.length > 0;
+
+  // Count number of GPA inputs
+  const gpaInputCount = gpaValues.length;
 
   return {
     category: 'Academic',
@@ -137,6 +141,7 @@ export function analyzeAcademicRisk(student, studentGrades = []) {
     factors: {
       avgGpa: finalGpa,
       gpaValues,
+      gpaInputCount,
       failingSubjects: failingSubjects.length,
       totalSubjects: studentGrades.length,
     },
@@ -171,9 +176,52 @@ export function calculateOverallRisk(financial, personal, academic) {
 
   // Calculate raw risk contribution for each category based on actual risk scores
   // If a category has no risk (riskScore = 0), it contributes 0% to the At-Risk classification
-  const rawAcademicContribution = academic.riskScore * CATEGORY_WEIGHTS.academic;
-  const rawPersonalContribution = personal.riskScore * CATEGORY_WEIGHTS.personal;
   const rawFinancialContribution = financial.riskScore * CATEGORY_WEIGHTS.financial;
+
+  // New personal contribution logic based on average of all 23 variables
+  let rawPersonalContribution = 0;
+  const overallAvg = personal.factors?.overallAvg;
+
+  if (personal.riskScore > 0 && overallAvg !== null) {
+    if (overallAvg < 3) {
+      // Average below 3: full 30% contribution
+      rawPersonalContribution = 0.30;
+    } else if (overallAvg >= 3 && overallAvg <= 5) {
+      // Average 3-5: scale down proportionally
+      // Scale: 3.0 = 30%, 5.0 = 0%
+      const avgRatio = (5 - overallAvg) / 2; // Normalized from 3-5 to 1-0
+      rawPersonalContribution = 0.30 * avgRatio;
+    }
+  } else {
+    // No personal risk or no data: use original weight
+    rawPersonalContribution = personal.riskScore * CATEGORY_WEIGHTS.personal;
+  }
+
+  // New academic contribution logic based on individual GPA values
+  let rawAcademicContribution = 0;
+  const gpaValues = academic.factors?.gpaValues || [];
+  const gpaInputCount = academic.factors?.gpaInputCount || 1;
+
+  if (academic.riskScore > 0 && gpaValues.length > 0) {
+    // Calculate contribution for each GPA input
+    // Base percentage per input = 50% / number of inputs
+    const basePercentagePerInput = 0.50 / gpaInputCount;
+
+    gpaValues.forEach(gpa => {
+      if (gpa >= 2.50) {
+        // GPA 2.50 - 3.00: full base percentage
+        rawAcademicContribution += basePercentagePerInput;
+      } else if (gpa >= 1.0) {
+        // GPA below 2.50: lower percentage proportional to GPA
+        // Scale: 1.0 = 0%, 2.50 = 100% of base percentage
+        const gpaRatio = (gpa - 1.0) / 1.5; // Normalized from 1.0-2.50 to 0-1
+        rawAcademicContribution += basePercentagePerInput * gpaRatio;
+      }
+    });
+  } else {
+    // No academic risk or no GPA data: use original weight
+    rawAcademicContribution = academic.riskScore * CATEGORY_WEIGHTS.academic;
+  }
 
   const totalRawContribution = rawAcademicContribution + rawPersonalContribution + rawFinancialContribution;
 

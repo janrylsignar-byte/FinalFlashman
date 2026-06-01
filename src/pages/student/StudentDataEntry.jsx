@@ -42,6 +42,19 @@ export default function StudentDataEntry() {
     classmates_influence_positively: student?.classmates_influence_positively || 3,
     work_well_with_classmates: student?.work_well_with_classmates || 3,
     friends_motivate: student?.friends_motivate || 3,
+    // Learning Resources and Facilities (Likert 1-5)
+    classrooms_comfortable: student?.classrooms_comfortable || 3,
+    facilities_help_focus: student?.facilities_help_focus || 3,
+    environment_motivates_attendance: student?.environment_motivates_attendance || 3,
+    computer_labs_support_studies: student?.computer_labs_support_studies || 3,
+    facilities_affect_participation: student?.facilities_affect_participation || 3,
+    furniture_adequate: student?.furniture_adequate || 3,
+    classrooms_need_improvements: student?.classrooms_need_improvements || 3,
+    learning_equipment_helps_performance: student?.learning_equipment_helps_performance || 3,
+    internet_supports_studies: student?.internet_supports_studies || 3,
+    maintained_environment_encourages_attendance: student?.maintained_environment_encourages_attendance || 3,
+    temperature_affects_concentration: student?.temperature_affects_concentration || 3,
+    physical_condition_influences_motivation: student?.physical_condition_influences_motivation || 3,
     // Financial fields
     scholarship: student?.scholarship || 'no',
     scholarship_amount: student?.scholarship_amount || '',
@@ -50,6 +63,7 @@ export default function StudentDataEntry() {
     study_hours: student?.study_hours || '',
     library_visits: student?.library_visits || '',
     lms_login_per_month: student?.lms_login_per_month || '',
+    concerns: student?.concerns || '',
   });
 
   const updateMutation = useMutation({
@@ -452,6 +466,175 @@ export default function StudentDataEntry() {
           </CardContent>
         </Card>
 
+        {/* Learning Resources and Facilities */}
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle className="text-base flex items-center gap-2">
+              <User className="w-4 h-4 text-primary" /> Learning Resources and Facilities (1 = Strongly Disagree, 5 = Strongly Agree)
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="classrooms_comfortable">The classrooms provide a comfortable learning environment</Label>
+                <Select value={formData.classrooms_comfortable.toString()} onValueChange={(v) => handleChange('classrooms_comfortable', parseInt(v))}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {[1, 2, 3, 4, 5].map(val => (
+                      <SelectItem key={val} value={val.toString()}>{val}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label htmlFor="facilities_help_focus">The school facilities help me focus during classes</Label>
+                <Select value={formData.facilities_help_focus.toString()} onValueChange={(v) => handleChange('facilities_help_focus', parseInt(v))}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {[1, 2, 3, 4, 5].map(val => (
+                      <SelectItem key={val} value={val.toString()}>{val}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label htmlFor="environment_motivates_attendance">I am more motivated to attend classes when the learning environment is comfortable</Label>
+                <Select value={formData.environment_motivates_attendance.toString()} onValueChange={(v) => handleChange('environment_motivates_attendance', parseInt(v))}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {[1, 2, 3, 4, 5].map(val => (
+                      <SelectItem key={val} value={val.toString()}>{val}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label htmlFor="computer_labs_support_studies">The computer laboratories and learning resources support my studies</Label>
+                <Select value={formData.computer_labs_support_studies.toString()} onValueChange={(v) => handleChange('computer_labs_support_studies', parseInt(v))}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {[1, 2, 3, 4, 5].map(val => (
+                      <SelectItem key={val} value={val.toString()}>{val}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label htmlFor="facilities_affect_participation">The condition of classrooms and facilities affects my class participation and attendance</Label>
+                <Select value={formData.facilities_affect_participation.toString()} onValueChange={(v) => handleChange('facilities_affect_participation', parseInt(v))}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {[1, 2, 3, 4, 5].map(val => (
+                      <SelectItem key={val} value={val.toString()}>{val}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label htmlFor="furniture_adequate">The chairs, tables, and other classroom furniture are adequate for learning</Label>
+                <Select value={formData.furniture_adequate.toString()} onValueChange={(v) => handleChange('furniture_adequate', parseInt(v))}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {[1, 2, 3, 4, 5].map(val => (
+                      <SelectItem key={val} value={val.toString()}>{val}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label htmlFor="classrooms_need_improvements">The classrooms need improvements in furniture and physical facilities</Label>
+                <Select value={formData.classrooms_need_improvements.toString()} onValueChange={(v) => handleChange('classrooms_need_improvements', parseInt(v))}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {[1, 2, 3, 4, 5].map(val => (
+                      <SelectItem key={val} value={val.toString()}>{val}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label htmlFor="learning_equipment_helps_performance">The availability of learning equipment and resources helps me perform better academically</Label>
+                <Select value={formData.learning_equipment_helps_performance.toString()} onValueChange={(v) => handleChange('learning_equipment_helps_performance', parseInt(v))}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {[1, 2, 3, 4, 5].map(val => (
+                      <SelectItem key={val} value={val.toString()}>{val}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label htmlFor="internet_supports_studies">The internet connection and technology resources provided by the school support my studies</Label>
+                <Select value={formData.internet_supports_studies.toString()} onValueChange={(v) => handleChange('internet_supports_studies', parseInt(v))}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {[1, 2, 3, 4, 5].map(val => (
+                      <SelectItem key={val} value={val.toString()}>{val}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label htmlFor="maintained_environment_encourages_attendance">A well-maintained classroom environment encourages me to attend classes regularly</Label>
+                <Select value={formData.maintained_environment_encourages_attendance.toString()} onValueChange={(v) => handleChange('maintained_environment_encourages_attendance', parseInt(v))}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {[1, 2, 3, 4, 5].map(val => (
+                      <SelectItem key={val} value={val.toString()}>{val}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label htmlFor="temperature_affects_concentration">The temperature and ventilation inside the classroom affect my concentration during lessons</Label>
+                <Select value={formData.temperature_affects_concentration.toString()} onValueChange={(v) => handleChange('temperature_affects_concentration', parseInt(v))}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {[1, 2, 3, 4, 5].map(val => (
+                      <SelectItem key={val} value={val.toString()}>{val}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label htmlFor="physical_condition_influences_motivation">The physical condition of the classroom influences my motivation to learn</Label>
+                <Select value={formData.physical_condition_influences_motivation.toString()} onValueChange={(v) => handleChange('physical_condition_influences_motivation', parseInt(v))}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {[1, 2, 3, 4, 5].map(val => (
+                      <SelectItem key={val} value={val.toString()}>{val}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Financial Data */}
         <Card className="mb-6">
           <CardHeader>
@@ -492,6 +675,27 @@ export default function StudentDataEntry() {
                 min="0"
                 value={formData.family_income}
                 onChange={(e) => handleChange('family_income', e.target.value)}
+              />
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Concerns */}
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle className="text-base flex items-center gap-2">
+              <User className="w-4 h-4 text-primary" /> Concerns
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div>
+              <Label htmlFor="concerns">Any concerns or feedback?</Label>
+              <Input
+                id="concerns"
+                type="text"
+                value={formData.concerns}
+                onChange={(e) => handleChange('concerns', e.target.value)}
+                placeholder="Enter your concerns here"
               />
             </div>
           </CardContent>

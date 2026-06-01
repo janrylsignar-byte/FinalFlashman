@@ -73,20 +73,137 @@
       "type": "number",
       "description": "LMS logins per month"
     },
-    "gpa_history": {
-      "type": "array",
-      "description": "GPA per semester",
-      "items": {
-        "type": "object",
-        "properties": {
-          "semester": {
-            "type": "string"
-          },
-          "gpa": {
-            "type": "number"
-          }
-        }
-      }
+    "gpa_y1s1": {
+      "type": "number",
+      "description": "GPA 1st Year 1st Semester"
+    },
+    "gpa_y1s2": {
+      "type": "number",
+      "description": "GPA 1st Year 2nd Semester"
+    },
+    "gpa_y2s1": {
+      "type": "number",
+      "description": "GPA 2nd Year 1st Semester"
+    },
+    "gpa_y2s2": {
+      "type": "number",
+      "description": "GPA 2nd Year 2nd Semester"
+    },
+    "gpa_y3s1": {
+      "type": "number",
+      "description": "GPA 3rd Year 1st Semester"
+    },
+    "like_course": {
+      "type": "number",
+      "description": "I like my course (Likert 1-5)"
+    },
+    "interested_in_subjects": {
+      "type": "number",
+      "description": "I am interested in the subjects (Likert 1-5)"
+    },
+    "course_motivates": {
+      "type": "number",
+      "description": "The course motivates me (Likert 1-5)"
+    },
+    "satisfied_with_performance": {
+      "type": "number",
+      "description": "I am satisfied with my performance (Likert 1-5)"
+    },
+    "previous_grades_affect": {
+      "type": "number",
+      "description": "Previous grades affect my current performance (Likert 1-5)"
+    },
+    "try_improve_grades": {
+      "type": "number",
+      "description": "I try to improve my grades (Likert 1-5)"
+    },
+    "study_regularly": {
+      "type": "number",
+      "description": "I study regularly (Likert 1-5)"
+    },
+    "submit_on_time": {
+      "type": "number",
+      "description": "I submit assignments on time (Likert 1-5)"
+    },
+    "manage_time_well": {
+      "type": "number",
+      "description": "I manage my time well (Likert 1-5)"
+    },
+    "instructors_explain_clearly": {
+      "type": "number",
+      "description": "Instructors explain clearly (Likert 1-5)"
+    },
+    "approach_instructors": {
+      "type": "number",
+      "description": "I approach instructors for help (Likert 1-5)"
+    },
+    "instructors_encourage": {
+      "type": "number",
+      "description": "Instructors encourage me (Likert 1-5)"
+    },
+    "classmates_influence_positively": {
+      "type": "number",
+      "description": "Classmates influence me positively (Likert 1-5)"
+    },
+    "work_well_with_classmates": {
+      "type": "number",
+      "description": "I work well with classmates (Likert 1-5)"
+    },
+    "friends_motivate": {
+      "type": "number",
+      "description": "Friends motivate me (Likert 1-5)"
+    },
+    "classrooms_comfortable": {
+      "type": "number",
+      "description": "The classrooms provide a comfortable learning environment (Likert 1-5)"
+    },
+    "facilities_help_focus": {
+      "type": "number",
+      "description": "The school facilities help me focus during classes (Likert 1-5)"
+    },
+    "environment_motivates_attendance": {
+      "type": "number",
+      "description": "I am more motivated to attend classes when the learning environment is comfortable (Likert 1-5)"
+    },
+    "computer_labs_support_studies": {
+      "type": "number",
+      "description": "The computer laboratories and learning resources support my studies (Likert 1-5)"
+    },
+    "facilities_affect_participation": {
+      "type": "number",
+      "description": "The condition of classrooms and facilities affects my class participation and attendance (Likert 1-5)"
+    },
+    "furniture_adequate": {
+      "type": "number",
+      "description": "The chairs, tables, and other classroom furniture are adequate for learning (Likert 1-5)"
+    },
+    "classrooms_need_improvements": {
+      "type": "number",
+      "description": "The classrooms need improvements in furniture and physical facilities (Likert 1-5)"
+    },
+    "learning_equipment_helps_performance": {
+      "type": "number",
+      "description": "The availability of learning equipment and resources helps me perform better academically (Likert 1-5)"
+    },
+    "internet_supports_studies": {
+      "type": "number",
+      "description": "The internet connection and technology resources provided by the school support my studies (Likert 1-5)"
+    },
+    "maintained_environment_encourages_attendance": {
+      "type": "number",
+      "description": "A well-maintained classroom environment encourages me to attend classes regularly (Likert 1-5)"
+    },
+    "temperature_affects_concentration": {
+      "type": "number",
+      "description": "The temperature and ventilation inside the classroom affect my concentration during lessons (Likert 1-5)"
+    },
+    "physical_condition_influences_motivation": {
+      "type": "number",
+      "description": "The physical condition of the classroom influences my motivation to learn (Likert 1-5)"
+    },
+    "concerns": {
+      "type": "string",
+      "description": "Student concerns (open-ended text)"
     },
     "status": {
       "type": "string",

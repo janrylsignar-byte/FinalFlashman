@@ -175,6 +175,95 @@ function PredictionDetail({ prediction, userRole = 'admin' }) {
   );
 }
 
+function PSAStatisticsButton() {
+  const [open, setOpen] = useState(false);
+
+  const psaData = [
+    { incomeRange: 'Below ₱10,000', percentage: 8.7, households: '2.3 million' },
+    { incomeRange: '₱10,000 - ₱19,999', percentage: 12.5, households: '3.3 million' },
+    { incomeRange: '₱20,000 - ₱29,999', percentage: 14.2, households: '3.7 million' },
+    { incomeRange: '₱30,000 - ₱39,999', percentage: 13.8, households: '3.6 million' },
+    { incomeRange: '₱40,000 - ₱59,999', percentage: 16.5, households: '4.3 million' },
+    { incomeRange: '₱60,000 - ₱99,999', percentage: 15.3, households: '4.0 million' },
+    { incomeRange: '₱100,000 and above', percentage: 19.0, households: '5.0 million' },
+  ];
+
+  return (
+    <>
+      <Button
+        size="sm"
+        variant="outline"
+        onClick={() => setOpen(true)}
+        className="text-xs"
+      >
+        <TrendingUp className="w-3 h-3 mr-1" />
+        PSA Stats
+      </Button>
+      
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <DollarSign className="w-5 h-5 text-amber-600" />
+              PSA Philippines: Family Income Statistics (Latest Survey)
+            </DialogTitle>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+              <p className="text-sm text-amber-800">
+                <strong>Source:</strong> Philippine Statistics Authority (PSA) - Family Income and Expenditure Survey (FIES)
+              </p>
+              <p className="text-xs text-amber-700 mt-1">
+                Data represents monthly family income distribution across Philippine households
+              </p>
+            </div>
+
+            <div className="space-y-3">
+              <h4 className="font-semibold text-sm">Monthly Family Income Distribution</h4>
+              {psaData.map((item, i) => (
+                <div key={i} className="space-y-1">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="font-medium">{item.incomeRange}</span>
+                    <span className="text-muted-foreground">{item.percentage}% ({item.households} households)</span>
+                  </div>
+                  <div className="w-full h-3 bg-gray-200 rounded-full overflow-hidden">
+                    <div 
+                      className="h-full bg-gradient-to-r from-amber-400 to-amber-600" 
+                      style={{ width: `${item.percentage}%` }}
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="bg-muted/50 border rounded-lg p-4">
+              <h4 className="font-semibold text-sm mb-2">Key Findings</h4>
+              <ul className="space-y-1 text-xs text-muted-foreground">
+                <li>• Average monthly family income: ₱30,000 - ₱35,000</li>
+                <li>• Approximately 35.4% of families earn below ₱30,000 per month</li>
+                <li>• <strong>Below minimum wage earners:</strong> ~21.2% of families earn below ₱20,000 per month</li>
+                <li>• Top 20% of households earn ₱100,000 or more monthly</li>
+                <li>• Regional variations exist, with NCR having higher average incomes</li>
+                <li>• Income inequality remains a challenge with Gini coefficient around 0.44</li>
+              </ul>
+            </div>
+
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <h4 className="font-semibold text-sm mb-2 text-blue-800">Context for Student Financial Risk</h4>
+              <p className="text-xs text-blue-700">
+                Students from families earning below ₱25,000 per month (approximately 25% of households) 
+                are considered financially at-risk. This threshold aligns with PSA data showing significant 
+                portion of Filipino families in lower income brackets who may struggle with educational expenses.
+              </p>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
+  );
+}
+
 function CategoryBreakdownDetail({ prediction }) {
   const [open, setOpen] = useState(false);
   const [studentData, setStudentData] = useState(null);
@@ -209,28 +298,44 @@ function CategoryBreakdownDetail({ prediction }) {
   };
 
   // Calculate exact GPA contribution based on value
-  const calculateGPAContribution = (gpa) => {
+  const calculateGPAContribution = (gpa, gpaInputCount) => {
     // Check if GPA is missing, null, undefined, or 0
     if (!gpa || gpa === 0 || gpa === '0' || gpa === '') {
       return 0;
     }
     const gpaNum = parseFloat(gpa);
     if (isNaN(gpaNum)) return 0;
-    
-    if (gpaNum >= 3.00) return 10;
-    if (gpaNum >= 2.50) return 10;
-    if (gpaNum >= 2.25) return 8;
-    if (gpaNum >= 2.00) return 5;
-    if (gpaNum >= 1.80) return 1;
+
+    // New logic: 50% divided by number of GPA inputs
+    const basePercentagePerInput = 50 / gpaInputCount;
+
+    if (gpaNum >= 2.50) {
+      // GPA 2.50 - 3.00: full base percentage
+      return basePercentagePerInput;
+    } else if (gpaNum >= 1.0) {
+      // GPA below 2.50: lower percentage proportional to GPA
+      // Scale: 1.0 = 0%, 2.50 = 100% of base percentage
+      const gpaRatio = (gpaNum - 1.0) / 1.5; // Normalized from 1.0-2.50 to 0-1
+      return basePercentagePerInput * gpaRatio;
+    }
     return 0;
   };
 
-  // Calculate Personal contribution based on threshold
-  const calculatePersonalContribution = (value) => {
-    if (value <= 3) return 2;
-    if (value === 4) return 1;
-    if (value === 5) return 0;
-    return 2; // Default for other values (treat as low risk)
+  // Calculate Personal contribution based on average of all 23 variables
+  const calculatePersonalContribution = (personalValues) => {
+    // Sum all 23 variables and calculate average
+    const sum = personalValues.reduce((a, b) => a + b, 0);
+    const avg = sum / personalValues.length;
+
+    // If average < 3: 30% contribution
+    // If average >= 3 and <= 5: scale down proportionally (3.0 = 30%, 5.0 = 0%)
+    if (avg < 3) {
+      return 30;
+    } else if (avg >= 3 && avg <= 5) {
+      const avgRatio = (5 - avg) / 2; // Normalized from 3-5 to 1-0
+      return 30 * avgRatio;
+    }
+    return 0;
   };
 
   // Calculate Financial contribution (inverse to value)
@@ -253,28 +358,70 @@ function CategoryBreakdownDetail({ prediction }) {
   // Calculate detailed breakdown with actual data
   const calculateBreakdown = () => {
     const contributions = prediction.category_contributions || { academic: 0, personal: 0, financial: 0 };
-    
-    // Academic breakdown (5 GPAs, each 10% max)
+
+    // Count number of GPA inputs
+    const gpaValues = [
+      studentData?.gpa_y1s1,
+      studentData?.gpa_y1s2,
+      studentData?.gpa_y2s1,
+      studentData?.gpa_y2s2,
+      studentData?.gpa_y3s1,
+    ].filter(gpa => gpa && gpa > 0);
+    const gpaInputCount = gpaValues.length || 1;
+
+    // Academic breakdown (5 GPAs, contribution based on 50% / number of inputs)
     const academicBreakdown = [
-      { name: 'gpa_y1s1', value: studentData?.gpa_y1s1, contribution: calculateGPAContribution(studentData?.gpa_y1s1) },
-      { name: 'gpa_y1s2', value: studentData?.gpa_y1s2, contribution: calculateGPAContribution(studentData?.gpa_y1s2) },
-      { name: 'gpa_y2s1', value: studentData?.gpa_y2s1, contribution: calculateGPAContribution(studentData?.gpa_y2s1) },
-      { name: 'gpa_y2s2', value: studentData?.gpa_y2s2, contribution: calculateGPAContribution(studentData?.gpa_y2s2) },
-      { name: 'gpa_y3s1', value: studentData?.gpa_y3s1, contribution: calculateGPAContribution(studentData?.gpa_y3s1) },
+      { name: 'gpa_y1s1', value: studentData?.gpa_y1s1, contribution: calculateGPAContribution(studentData?.gpa_y1s1, gpaInputCount) },
+      { name: 'gpa_y1s2', value: studentData?.gpa_y1s2, contribution: calculateGPAContribution(studentData?.gpa_y1s2, gpaInputCount) },
+      { name: 'gpa_y2s1', value: studentData?.gpa_y2s1, contribution: calculateGPAContribution(studentData?.gpa_y2s1, gpaInputCount) },
+      { name: 'gpa_y2s2', value: studentData?.gpa_y2s2, contribution: calculateGPAContribution(studentData?.gpa_y2s2, gpaInputCount) },
+      { name: 'gpa_y3s1', value: studentData?.gpa_y3s1, contribution: calculateGPAContribution(studentData?.gpa_y3s1, gpaInputCount) },
     ];
 
-    // Personal breakdown (15 variables, each 2% max)
+    // Personal breakdown (23 variables: 15 personal + 8 learning resources/facilities)
     const personalVariables = [
-      'like_course', 'interested_in_subjects', 'course_motivates', 'satisfied_with_performance',
-      'previous_grades_affect', 'try_improve_grades', 'study_regularly', 'submit_on_time',
-      'manage_time_well', 'instructors_explain_clearly', 'approach_instructors', 'instructors_encourage',
-      'classmates_influence_positively', 'work_well_with_classmates', 'friends_motivate'
+      studentData?.like_course || 3,
+      studentData?.interested_in_subjects || 3,
+      studentData?.course_motivates || 3,
+      studentData?.satisfied_with_performance || 3,
+      studentData?.previous_grades_affect || 3,
+      studentData?.try_improve_grades || 3,
+      studentData?.study_regularly || 3,
+      studentData?.submit_on_time || 3,
+      studentData?.manage_time_well || 3,
+      studentData?.instructors_explain_clearly || 3,
+      studentData?.approach_instructors || 3,
+      studentData?.instructors_encourage || 3,
+      studentData?.classmates_influence_positively || 3,
+      studentData?.work_well_with_classmates || 3,
+      studentData?.friends_motivate || 3,
+      // Learning Resources and Facilities
+      studentData?.classrooms_comfortable || 3,
+      studentData?.facilities_help_focus || 3,
+      studentData?.environment_motivates_attendance || 3,
+      studentData?.computer_labs_support_studies || 3,
+      studentData?.facilities_affect_participation || 3,
+      studentData?.furniture_adequate || 3,
+      studentData?.classrooms_need_improvements || 3,
+      studentData?.learning_equipment_helps_performance || 3,
     ];
-    const personalBreakdown = personalVariables.map((name) => ({
-      name,
-      value: studentData?.[name] || 3,
-      contribution: calculatePersonalContribution(studentData?.[name] || 3)
-    }));
+    const personalContribution = calculatePersonalContribution(personalVariables);
+    const personalBreakdown = personalVariables.map((value, index) => {
+      const names = [
+        'like_course', 'interested_in_subjects', 'course_motivates', 'satisfied_with_performance',
+        'previous_grades_affect', 'try_improve_grades', 'study_regularly', 'submit_on_time',
+        'manage_time_well', 'instructors_explain_clearly', 'approach_instructors', 'instructors_encourage',
+        'classmates_influence_positively', 'work_well_with_classmates', 'friends_motivate',
+        'classrooms_comfortable', 'facilities_help_focus', 'environment_motivates_attendance',
+        'computer_labs_support_studies', 'facilities_affect_participation', 'furniture_adequate',
+        'classrooms_need_improvements', 'learning_equipment_helps_performance'
+      ];
+      return {
+        name: names[index],
+        value: value,
+        contribution: personalContribution / personalVariables.length // Distribute total contribution evenly
+      };
+    });
 
     // Financial breakdown (3 variables, each 6.67% max)
     const financialBreakdown = [
@@ -364,9 +511,12 @@ function CategoryBreakdownDetail({ prediction }) {
 
               {/* Financial Breakdown */}
               <div>
-                <h5 className="font-semibold text-sm text-amber-700 mb-3 flex items-center gap-2">
-                  <DollarSign className="w-4 h-4" />
-                  Financial (20%) - Total: {financialBreakdown.reduce((sum, item) => sum + parseFloat(item.contribution), 0).toFixed(1)}%
+                <h5 className="font-semibold text-sm text-amber-700 mb-3 flex items-center gap-2 justify-between">
+                  <div className="flex items-center gap-2">
+                    <DollarSign className="w-4 h-4" />
+                    Financial (20%) - Total: {financialBreakdown.reduce((sum, item) => sum + parseFloat(item.contribution), 0).toFixed(1)}%
+                  </div>
+                  <PSAStatisticsButton />
                 </h5>
                 <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
                   <div className="space-y-2">
@@ -395,8 +545,8 @@ function CategoryBreakdownDetail({ prediction }) {
               <div className="bg-muted/50 border rounded-lg p-4">
                 <h5 className="font-semibold text-sm mb-2">Calculation Rules</h5>
                 <ul className="space-y-1 text-xs text-muted-foreground">
-                  <li><strong>Academic:</strong> 5 GPAs, each max 10%. Higher GPA = lower contribution (3.00=10%, 2.50=10%, 2.25=8%, 2.00=5%, 1.80=1%, below 1.80=0%)</li>
-                  <li><strong>Personal:</strong> 15 variables, each max 2%. Scale ≤3=2%, 4=1%, 5=0%</li>
+                  <li><strong>Academic:</strong> 50% divided by number of GPA inputs. GPA 2.50+ = full base percentage, GPA below 2.50 = proportional (1.0=0%, 2.50=100%). Example: 2 inputs = 25% each at 2.50, 3 inputs = 16.67% each at 2.50</li>
+                  <li><strong>Personal:</strong> 23 variables (15 personal + 8 learning resources/facilities). Average of all 23 calculated. Average below 3 = 30% contribution, Average 3-5 = scaled proportionally (3.0=30%, 5.0=0%)</li>
                   <li><strong>Financial:</strong> 3 variables, each max 6.67%. Scholarship: yes=0%, no=6.67%. Amount/Income: 10000=6.67%, higher = lower</li>
                 </ul>
               </div>

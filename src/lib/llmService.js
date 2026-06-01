@@ -175,68 +175,112 @@ function generateRuleBasedExplanation(riskAnalysis, student, userRole = 'student
     }
   }
 
-  // Generate recommendations based on user role and highest contributing category
+  // Generate recommendations based on specific weaknesses
   const recommendations = [];
-  const contributions = categoryContributions || { academic: 0, personal: 0, financial: 0 };
+  const weaknesses = personal.weaknesses || [];
+  const strengths = personal.strengths || [];
 
-  // Find the highest contributing category
-  const highestCategory = Object.entries(contributions).sort((a, b) => b[1] - a[1])[0][0];
+  // Mapping of weakness names to specific recommendations
+  const weaknessRecommendations = {
+    // Course Experience
+    'like_course': ['Re-evaluate course alignment with career goals', 'Explore course options that better match interests', 'Discuss course concerns with academic advisor'],
+    'interested_in_subjects': ['Find ways to connect subjects to personal interests', 'Explore real-world applications of course material', 'Join subject-related clubs or organizations'],
+    'course_motivates': ['Set personal goals related to course outcomes', 'Connect with motivated peers for inspiration', 'Seek mentorship from upperclassmen in the field'],
+    'satisfied_with_performance': ['Set achievable performance goals', 'Track progress regularly to build confidence', 'Celebrate small improvements'],
+    // Academic Performance
+    'previous_grades_affect': ['Focus on current performance rather than past grades', 'Develop growth mindset for academic improvement', 'Use past performance as learning opportunity'],
+    'try_improve_grades': ['Create specific grade improvement plan', 'Utilize tutoring and academic support services', 'Meet with instructors for feedback'],
+    // Learning Behavior
+    'study_regularly': ['Establish consistent daily study schedule', 'Use study planner or calendar app', 'Create dedicated study space free from distractions'],
+    'submit_on_time': ['Use assignment tracking system', 'Set personal deadlines before actual due dates', 'Break large assignments into smaller tasks'],
+    'manage_time_well': ['Learn time management techniques (Pomodoro, time blocking)', 'Use digital tools for scheduling and reminders', 'Prioritize tasks based on importance and urgency'],
+    // Instructor Interaction
+    'instructors_explain_clearly': ['Ask clarifying questions during class', 'Visit instructors during office hours', 'Form study groups to discuss unclear topics'],
+    'approach_instructors': ['Practice communication skills', 'Start with small questions to build confidence', 'Prepare questions before approaching instructors'],
+    'instructors_encourage': ['Seek encouragement from peers and mentors', 'Build internal motivation and self-encouragement', 'Join supportive study groups'],
+    // Peer Influence
+    'classmates_influence_positively': ['Seek out motivated and positive peers', 'Join academic clubs and organizations', 'Participate in group study sessions'],
+    'work_well_with_classmates': ['Develop teamwork and collaboration skills', 'Practice active listening in group settings', 'Take initiative in group projects'],
+    'friends_motivate': ['Build relationships with academically motivated friends', 'Share goals with supportive peers', 'Create accountability partnerships'],
+    // Learning Resources and Facilities
+    'classrooms_comfortable': ['Report classroom comfort issues to administration', 'Use alternative study spaces when needed', 'Bring personal comfort items (cushions, etc.)'],
+    'facilities_help_focus': ['Find quiet study areas on campus', 'Use noise-canceling headphones', 'Schedule study during less crowded times'],
+    'environment_motivates_attendance': ['Focus on academic goals rather than environment', 'Create personal motivation system', 'Engage actively in class regardless of environment'],
+    'computer_labs_support_studies': ['Utilize computer labs during available hours', 'Bring personal laptop if possible', 'Plan lab usage in advance'],
+    'facilities_affect_participation': ['Speak up about facility concerns', 'Find alternative spaces for group work', 'Use online collaboration tools when facilities are limiting'],
+    'furniture_adequate': ['Report furniture issues to facilities management', 'Use ergonomic study aids', 'Take regular breaks to avoid discomfort'],
+    'classrooms_need_improvements': ['Provide constructive feedback to administration', 'Focus on learning despite facility limitations', 'Advocate for necessary improvements'],
+    'learning_equipment_helps_performance': ['Request access to necessary equipment', 'Use library resources for equipment needs', 'Form equipment-sharing groups with classmates'],
+  };
 
-  if (userRole === 'admin' || userRole === 'dean') {
-    // Admin/Dean recommendations (administrative actions)
-    if (highestCategory === 'personal' && contributions.personal > 0) {
-      recommendations.push('Schedule a meeting with the student to discuss personal challenges');
-      recommendations.push('Refer student to campus counseling services');
-      recommendations.push('Assign a peer mentor for academic and personal support');
-      recommendations.push('Monitor student attendance and engagement');
-      recommendations.push('Coordinate with academic advisor for regular check-ins');
-    } else if (highestCategory === 'financial' && contributions.financial > 0) {
-      recommendations.push('Connect student with financial aid office for assistance');
-      recommendations.push('Review available scholarship programs and facilitate application');
-      recommendations.push('Explore on-campus work-study opportunities');
-      recommendations.push('Coordinate with student affairs for emergency financial support');
-      recommendations.push('Schedule financial literacy workshop attendance');
-    } else if (highestCategory === 'academic' && contributions.academic > 0) {
+  // Financial recommendations (if financially at-risk)
+  if (financial.isAtRisk) {
+    if (userRole === 'admin' || userRole === 'dean') {
+      recommendations.push('Prioritize financial support: Connect student with TES (Tertiary Education Subsidy) scholarship programs');
+      recommendations.push('Assist with LGU (Local Government Unit) scholarship applications');
+    } else {
+      recommendations.push('Prioritize financial support: Apply for TES (Tertiary Education Subsidy) scholarship programs');
+      recommendations.push('Apply for LGU (Local Government Unit) scholarship assistance');
+    }
+  }
+
+  // Academic recommendations (if academically at-risk)
+  if (academic.isAtRisk) {
+    if (userRole === 'admin' || userRole === 'dean') {
       recommendations.push('Assign peer tutor for struggling subjects');
       recommendations.push('Schedule mandatory academic advising session');
-      recommendations.push('Coordinate with instructors for academic intervention');
-      recommendations.push('Review and adjust course load if necessary');
-      recommendations.push('Monitor academic progress weekly');
     } else {
-      // Default admin recommendations
-      recommendations.push('Schedule meeting with student to discuss concerns');
-      recommendations.push('Coordinate with academic advisor for support plan');
-      recommendations.push('Monitor student progress and engagement');
-      recommendations.push('Connect with appropriate campus resources');
-      recommendations.push('Document intervention plan and follow-up schedule');
-    }
-  } else {
-    // Student recommendations (personal actions)
-    if (highestCategory === 'personal' && contributions.personal > 0) {
-      recommendations.push('Improve study habits through structured scheduling');
-      recommendations.push('Attend time management training workshops');
-      recommendations.push('Join peer study groups for accountability');
-      recommendations.push('Schedule counseling session for personal support');
-      recommendations.push('Set up regular check-ins with academic advisor');
-    } else if (highestCategory === 'financial' && contributions.financial > 0) {
-      recommendations.push('Apply for scholarship assistance programs');
-      recommendations.push('Explore financial aid options with the financial aid office');
-      recommendations.push('Consider on-campus student job opportunities');
-      recommendations.push('Consult with financial aid office for budget planning');
-      recommendations.push('Research emergency grant programs if needed');
-    } else if (highestCategory === 'academic' && contributions.academic > 0) {
       recommendations.push('Enroll in tutoring support for struggling subjects');
       recommendations.push('Schedule academic advising session');
-      recommendations.push('Develop a structured study plan with regular milestones');
-      recommendations.push('Consider joining peer study groups');
-      recommendations.push('Meet with instructors during office hours');
+    }
+  }
+
+  // Generate recommendations based on specific weaknesses
+  if (weaknesses.length > 0) {
+    // Get recommendations for each weakness
+    weaknesses.forEach(weakness => {
+      const specificRecs = weaknessRecommendations[weakness.name] || [];
+      specificRecs.slice(0, 1).forEach(rec => {
+        if (!recommendations.includes(rec)) {
+          recommendations.push(rec);
+        }
+      });
+    });
+  }
+
+  // If no weaknesses (Good Standing), provide maintenance recommendations
+  if (weaknesses.length === 0 && overallResult === 'Good Standing') {
+    if (userRole === 'admin' || userRole === 'dean') {
+      recommendations.push('Continue monitoring student progress and engagement');
+      recommendations.push('Encourage student to maintain current study habits');
+      recommendations.push('Recognize and reinforce positive behaviors');
+      recommendations.push('Provide opportunities for leadership roles');
+      recommendations.push('Connect student with advanced academic opportunities');
     } else {
-      // Default student recommendations
-      recommendations.push('Meet with academic advisor to discuss concerns');
-      recommendations.push('Utilize campus resources (tutoring, counseling, financial aid)');
-      recommendations.push('Develop a structured study schedule');
-      recommendations.push('Connect with peer support groups');
-      recommendations.push('Set achievable short-term academic goals');
+      recommendations.push('Continue current effective study habits');
+      recommendations.push('Set new academic goals to maintain momentum');
+      recommendations.push('Consider peer tutoring or mentoring opportunities');
+      recommendations.push('Explore advanced courses or enrichment activities');
+      recommendations.push('Maintain work-life balance for sustained success');
+    }
+  }
+
+  // Fill remaining recommendations with general ones if needed
+  if (recommendations.length < 5) {
+    if (userRole === 'admin' || userRole === 'dean') {
+      if (!recommendations.includes('Monitor student progress regularly')) {
+        recommendations.push('Monitor student progress regularly');
+      }
+      if (!recommendations.includes('Coordinate with academic advisor for support')) {
+        recommendations.push('Coordinate with academic advisor for support');
+      }
+    } else {
+      if (!recommendations.includes('Utilize campus resources for continued success')) {
+        recommendations.push('Utilize campus resources for continued success');
+      }
+      if (!recommendations.includes('Maintain regular communication with advisors')) {
+        recommendations.push('Maintain regular communication with advisors');
+      }
     }
   }
 
