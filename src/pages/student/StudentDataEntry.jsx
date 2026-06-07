@@ -669,13 +669,17 @@ export default function StudentDataEntry() {
             )}
             <div>
               <Label htmlFor="family_income">Monthly Family Income (PHP)</Label>
-              <Input
-                id="family_income"
-                type="number"
-                min="0"
-                value={formData.family_income}
-                onChange={(e) => handleChange('family_income', e.target.value)}
-              />
+              <Select value={formData.family_income} onValueChange={(v) => handleChange('family_income', v)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select income range" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Below 20000">Below 20000</SelectItem>
+                  <SelectItem value="25000-30000">25000-30000</SelectItem>
+                  <SelectItem value="30000-40000">30000-40000</SelectItem>
+                  <SelectItem value="50000 above">50000 above</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </CardContent>
         </Card>
