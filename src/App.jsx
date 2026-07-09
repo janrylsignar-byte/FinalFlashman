@@ -15,6 +15,7 @@ import ConcernsPage from '@/pages/admin/ConcernsPage';
 import ReportsPage from '@/pages/admin/ReportsPage';
 import TrainingLogsPage from '@/pages/admin/TrainingLogsPage';
 import PredictionLogsPage from '@/pages/admin/PredictionLogsPage';
+import PredictionResultsTable from '@/pages/admin/PredictionResultsTable';
 import DeanDashboard from '@/pages/dean/DeanDashboard';
 import DeanStudents from '@/pages/dean/DeanStudents';
 import DeanPredictions from '@/pages/dean/DeanPredictions';
@@ -94,6 +95,7 @@ const AppRoutes = () => {
         <Route path="/admin/reports" element={<ReportsPage />} />
         <Route path="/admin/training-logs" element={<TrainingLogsPage />} />
         <Route path="/admin/prediction-logs" element={<PredictionLogsPage />} />
+        <Route path="/admin/prediction-results" element={<PredictionResultsTable />} />
         <Route path="/admin/settings" element={<Settings />} />
       </Route>
 

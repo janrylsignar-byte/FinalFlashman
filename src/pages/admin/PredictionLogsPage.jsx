@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase as base44 } from '@/api/supabaseClient';
 import PageHeader from '@/components/shared/PageHeader';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -17,6 +17,322 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Input } from '@/components/ui/input';
 import { generateExplanationAndRecommendations } from '@/lib/llmService';
+
+function PredictionVsActualOutcomes({ predictions }) {
+  const { data: students = [] } = useQuery({
+    queryKey: ['students'],
+    queryFn: () => base44.entities.Student.list(),
+  });
+
+  // Combine predictions with student data
+  const studentPredictions = students.map(student => {
+    const prediction = predictions.find(p => p.student_id === student.student_id);
+    return {
+      ...student,
+      predictedRisk: prediction?.result || 'Not Predicted',
+      confidence: prediction?.confidence || 0,
+      actualStatus: student.status || 'active',
+    };
+  });
+
+  // Filter for at-risk predictions
+  const atRiskPredictions = studentPredictions.filter(s => s.predictedRisk === 'At-Risk');
+  const goodStandingPredictions = studentPredictions.filter(s => s.predictedRisk === 'Good Standing');
+
+  // Filter for Good Standing students with category at-risk indicators
+  // These are students who are Good Standing overall but have at-risk in at least one category
+  const goodStandingWithCategoryRisk = studentPredictions.filter(s => {
+    const prediction = predictions.find(p => p.student_id === s.student_id);
+    if (!prediction || prediction.result !== 'Good Standing') return false;
+    // Check if any category is at-risk
+    const hasAcademicRisk = prediction.academic_risk?.isAtRisk;
+    const hasFinancialRisk = prediction.financial_risk?.isAtRisk;
+    const hasPersonalRisk = prediction.personal_risk?.isAtRisk;
+    return hasAcademicRisk || hasFinancialRisk || hasPersonalRisk;
+  });
+
+  // Calculate actual dropouts from at-risk predictions
+  const actualDropoutsFromAtRisk = atRiskPredictions.filter(s => s.actualStatus === 'dropped' || s.actualStatus === 'inactive');
+  const notDroppedFromAtRisk = atRiskPredictions.filter(s => s.actualStatus === 'active' || s.actualStatus === 'enrolled');
+
+  // Calculate actual dropouts from Good Standing with category risk
+  const actualDropoutsFromCategoryRisk = goodStandingWithCategoryRisk.filter(s => s.actualStatus === 'dropped' || s.actualStatus === 'inactive');
+  const notDroppedFromCategoryRisk = goodStandingWithCategoryRisk.filter(s => s.actualStatus === 'active' || s.actualStatus === 'enrolled');
+
+  // Calculate statistics
+  const totalPredicted = atRiskPredictions.length;
+  const actualDropped = actualDropoutsFromAtRisk.length;
+  const predictionAccuracy = totalPredicted > 0 ? ((actualDropped / totalPredicted) * 100).toFixed(1) : 0;
+
+  // Calculate category risk statistics
+  const totalCategoryRisk = goodStandingWithCategoryRisk.length;
+  const actualDroppedCategoryRisk = actualDropoutsFromCategoryRisk.length;
+  const categoryRiskAccuracy = totalCategoryRisk > 0 ? ((actualDroppedCategoryRisk / totalCategoryRisk) * 100).toFixed(1) : 0;
+
+  return (
+    <div className="space-y-4">
+      {/* Summary Statistics */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">Total Students</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-2xl font-bold">{students.length}</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">Good Standing with Category Risk</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-2xl font-bold text-amber-600">{goodStandingWithCategoryRisk.length}</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">Actually Dropped</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-2xl font-bold">{actualDroppedCategoryRisk.length}</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">Prediction Accuracy</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-2xl font-bold text-emerald-600">{categoryRiskAccuracy}%</p>
+          </CardContent>
+        </Card>
+      </div>
+
+      <Tabs defaultValue="category-risk" className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="category-risk">Category At-Risk</TabsTrigger>
+          <TabsTrigger value="at-risk">At-Risk Predictions</TabsTrigger>
+          <TabsTrigger value="good-standing">Good Standing Predictions</TabsTrigger>
+          <TabsTrigger value="all">All Students</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="category-risk">
+          <Card>
+            <CardHeader>
+              <CardTitle>Good Standing Students with Category At-Risk Indicators vs Actual Status</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {goodStandingWithCategoryRisk.length === 0 ? (
+                <p className="text-center text-muted-foreground py-8">No Good Standing students with category at-risk indicators found</p>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Student ID</TableHead>
+                      <TableHead>Name</TableHead>
+                      <TableHead>Course</TableHead>
+                      <TableHead>Overall Risk</TableHead>
+                      <TableHead>At-Risk Category</TableHead>
+                      <TableHead>Actual Status</TableHead>
+                      <TableHead>Match</TableHead>
+                      <TableHead>Confidence</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {goodStandingWithCategoryRisk.map((student) => {
+                      const prediction = predictions.find(p => p.student_id === student.student_id);
+                      const isMatch = student.actualStatus === 'dropped' || student.actualStatus === 'inactive';
+                      const atRiskCategories = [];
+                      if (prediction?.academic_risk?.isAtRisk) atRiskCategories.push('Academic');
+                      if (prediction?.financial_risk?.isAtRisk) atRiskCategories.push('Financial');
+                      if (prediction?.personal_risk?.isAtRisk) atRiskCategories.push('Personal');
+                      return (
+                        <TableRow key={student.student_id}>
+                          <TableCell className="font-medium">{student.student_id}</TableCell>
+                          <TableCell>{student.name || student.full_name}</TableCell>
+                          <TableCell>{student.course}</TableCell>
+                          <TableCell>
+                            <Badge variant="default">Good Standing</Badge>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex gap-1 flex-wrap">
+                              {atRiskCategories.map(cat => (
+                                <Badge key={cat} variant="outline" className="text-xs capitalize">
+                                  {cat}
+                                </Badge>
+                              ))}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant={student.actualStatus === 'active' || student.actualStatus === 'enrolled' ? 'default' : 'secondary'}>
+                              {student.actualStatus}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            {isMatch ? (
+                              <CheckCircle className="w-5 h-5 text-emerald-500" />
+                            ) : (
+                              <AlertTriangle className="w-5 h-5 text-destructive" />
+                            )}
+                          </TableCell>
+                          <TableCell>{((student.confidence || 0) * 100).toFixed(0)}%</TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="at-risk">
+          <Card>
+            <CardHeader>
+              <CardTitle>Students Predicted as At-Risk vs Actual Status</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {atRiskPredictions.length === 0 ? (
+                <p className="text-center text-muted-foreground py-8">No at-risk predictions found</p>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Student ID</TableHead>
+                      <TableHead>Name</TableHead>
+                      <TableHead>Course</TableHead>
+                      <TableHead>Predicted Risk</TableHead>
+                      <TableHead>Actual Status</TableHead>
+                      <TableHead>Match</TableHead>
+                      <TableHead>Confidence</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {atRiskPredictions.map((student) => {
+                      const isMatch = student.actualStatus === 'dropped' || student.actualStatus === 'inactive';
+                      return (
+                        <TableRow key={student.student_id}>
+                          <TableCell className="font-medium">{student.student_id}</TableCell>
+                          <TableCell>{student.name || student.full_name}</TableCell>
+                          <TableCell>{student.course}</TableCell>
+                          <TableCell>
+                            <Badge variant="destructive">At-Risk</Badge>
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant={student.actualStatus === 'active' || student.actualStatus === 'enrolled' ? 'default' : 'secondary'}>
+                              {student.actualStatus}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            {isMatch ? (
+                              <CheckCircle className="w-5 h-5 text-emerald-500" />
+                            ) : (
+                              <AlertTriangle className="w-5 h-5 text-destructive" />
+                            )}
+                          </TableCell>
+                          <TableCell>{((student.confidence || 0) * 100).toFixed(0)}%</TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="good-standing">
+          <Card>
+            <CardHeader>
+              <CardTitle>Students Predicted as Good Standing</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {goodStandingPredictions.length === 0 ? (
+                <p className="text-center text-muted-foreground py-8">No good standing predictions found</p>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Student ID</TableHead>
+                      <TableHead>Name</TableHead>
+                      <TableHead>Course</TableHead>
+                      <TableHead>Predicted Risk</TableHead>
+                      <TableHead>Actual Status</TableHead>
+                      <TableHead>Confidence</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {goodStandingPredictions.map((student) => (
+                      <TableRow key={student.student_id}>
+                        <TableCell className="font-medium">{student.student_id}</TableCell>
+                        <TableCell>{student.name || student.full_name}</TableCell>
+                        <TableCell>{student.course}</TableCell>
+                        <TableCell>
+                          <Badge variant="default">Good Standing</Badge>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant={student.actualStatus === 'active' || student.actualStatus === 'enrolled' ? 'default' : 'secondary'}>
+                            {student.actualStatus}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>{((student.confidence || 0) * 100).toFixed(0)}%</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="all">
+          <Card>
+            <CardHeader>
+              <CardTitle>All Student Predictions</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Student ID</TableHead>
+                    <TableHead>Name</TableHead>
+                    <TableHead>Course</TableHead>
+                    <TableHead>Predicted Risk</TableHead>
+                    <TableHead>Actual Status</TableHead>
+                    <TableHead>Confidence</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {studentPredictions.map((student) => (
+                    <TableRow key={student.student_id}>
+                      <TableCell className="font-medium">{student.student_id}</TableCell>
+                      <TableCell>{student.name || student.full_name}</TableCell>
+                      <TableCell>{student.course}</TableCell>
+                      <TableCell>
+                        {student.predictedRisk === 'At-Risk' ? (
+                          <Badge variant="destructive">At-Risk</Badge>
+                        ) : student.predictedRisk === 'Good Standing' ? (
+                          <Badge variant="default">Good Standing</Badge>
+                        ) : (
+                          <Badge variant="secondary">Not Predicted</Badge>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant={student.actualStatus === 'active' || student.actualStatus === 'enrolled' ? 'default' : 'secondary'}>
+                          {student.actualStatus}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>{((student.confidence || 0) * 100).toFixed(0)}%</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
+}
 
 function PredictionDetail({ prediction, userRole = 'admin' }) {
   if (!prediction) return null;
@@ -646,6 +962,7 @@ export default function PredictionLogsPage() {
           <TabsList>
             <TabsTrigger value="predictions">Predictions</TabsTrigger>
             <TabsTrigger value="category-breakdown">Category Breakdown</TabsTrigger>
+            <TabsTrigger value="prediction-vs-actual">Prediction vs Actual</TabsTrigger>
           </TabsList>
 
           <TabsContent value="predictions">
@@ -847,6 +1164,10 @@ export default function PredictionLogsPage() {
                 </Card>
               </div>
             )}
+          </TabsContent>
+
+          <TabsContent value="prediction-vs-actual">
+            <PredictionVsActualOutcomes predictions={predictions} />
           </TabsContent>
         </Tabs>
       )}
